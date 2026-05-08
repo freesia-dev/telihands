@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DisplayMainRouteImport } from './routes/display.main'
 import { Route as AdminRunningTextRouteImport } from './routes/_admin.running-text'
 import { Route as AdminProductsRouteImport } from './routes/_admin.products'
 import { Route as AdminMediaRouteImport } from './routes/_admin.media'
@@ -30,6 +31,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisplayMainRoute = DisplayMainRouteImport.update({
+  id: '/display/main',
+  path: '/display/main',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRunningTextRoute = AdminRunningTextRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/media': typeof AdminMediaRoute
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
+  '/display/main': typeof DisplayMainRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/media': typeof AdminMediaRoute
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
+  '/display/main': typeof DisplayMainRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_admin/media': typeof AdminMediaRoute
   '/_admin/products': typeof AdminProductsRoute
   '/_admin/running-text': typeof AdminRunningTextRoute
+  '/display/main': typeof DisplayMainRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/media'
     | '/products'
     | '/running-text'
+    | '/display/main'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/media'
     | '/products'
     | '/running-text'
+    | '/display/main'
   id:
     | '__root__'
     | '/'
@@ -116,12 +127,14 @@ export interface FileRouteTypes {
     | '/_admin/media'
     | '/_admin/products'
     | '/_admin/running-text'
+    | '/display/main'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  DisplayMainRoute: typeof DisplayMainRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/display/main': {
+      id: '/display/main'
+      path: '/display/main'
+      fullPath: '/display/main'
+      preLoaderRoute: typeof DisplayMainRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/running-text': {
@@ -207,6 +227,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  DisplayMainRoute: DisplayMainRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
