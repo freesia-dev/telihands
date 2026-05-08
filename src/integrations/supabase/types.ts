@@ -14,16 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deposito_rates: {
+        Row: {
+          created_at: string
+          id: string
+          interest_rate: number
+          is_active: boolean
+          is_promo: boolean
+          min_amount: number
+          sort_order: number
+          tenor_months: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          is_active?: boolean
+          is_promo?: boolean
+          min_amount?: number
+          sort_order?: number
+          tenor_months: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          is_active?: boolean
+          is_promo?: boolean
+          min_amount?: number
+          sort_order?: number
+          tenor_months?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      media: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          file_path: string
+          file_url: string
+          id: string
+          is_active: boolean
+          media_type: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          file_path: string
+          file_url: string
+          id?: string
+          is_active?: boolean
+          media_type: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          file_path?: string
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      running_text: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          sort_order: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      savings_products: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          interest_rate: number
+          is_active: boolean
+          min_balance: number
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          interest_rate?: number
+          is_active?: boolean
+          min_balance?: number
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          interest_rate?: number
+          is_active?: boolean
+          min_balance?: number
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "viewer"],
+    },
   },
 } as const
