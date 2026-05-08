@@ -105,37 +105,39 @@ function DisplayPage() {
           </AnimatePresence>
         </div>
 
-        {/* Right column: savings + deposito */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 gap-3 min-h-0">
+        {/* Right column: savings (auto) + deposito (compact) */}
+        <div className="flex flex-col gap-3 min-h-0">
           <Panel title="Suku Bunga Tabungan" accent="from-blue-500 to-indigo-600">
-            <div className="grid gap-2 overflow-auto pr-1 h-full content-start">
+            <div className="grid gap-1.5 h-full content-start">
               {savings.length === 0 && (
                 <div className="text-white/40 text-sm">Belum ada produk tabungan.</div>
               )}
               {savings.map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 transition rounded-xl px-3 sm:px-4 py-2.5 border border-white/5">
-                  <span className="font-medium text-sm sm:text-base truncate">{s.name}</span>
-                  <span className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-300 tabular-nums shrink-0">{fmtPct(s.interest_rate)}</span>
+                <div key={s.id} className="flex items-center justify-between gap-3 bg-white/5 rounded-lg px-3 py-2 border border-white/5">
+                  <span className="font-medium text-sm truncate">{s.name}</span>
+                  <span className="text-lg font-bold text-amber-300 tabular-nums shrink-0">{fmtPct(s.interest_rate)}</span>
                 </div>
               ))}
             </div>
           </Panel>
-          <Panel title="Suku Bunga Deposito" accent="from-orange-500 to-amber-500">
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2 h-full content-start overflow-auto pr-1">
-              {depo.length === 0 && (
-                <div className="col-span-full text-white/40 text-sm">Belum ada rate deposito.</div>
-              )}
-              {depo.map((d) => (
-                <div key={d.id} className="relative bg-white/5 hover:bg-white/10 transition rounded-xl px-2 py-3 text-center border border-white/5 flex flex-col items-center justify-center min-h-[88px]">
-                  {d.is_promo && (
-                    <span className="absolute top-1 right-1 text-[10px] bg-amber-400 text-black font-bold px-1.5 py-0.5 rounded-full">PROMO</span>
-                  )}
-                  <p className="text-[11px] sm:text-xs text-white/60 uppercase tracking-wide">{d.tenor_months} bulan</p>
-                  <p className="text-xl sm:text-2xl xl:text-3xl font-extrabold text-amber-300 tabular-nums leading-tight">{fmtPct(d.interest_rate)}</p>
-                </div>
-              ))}
-            </div>
-          </Panel>
+          <div className="shrink-0">
+            <Panel title="Suku Bunga Deposito" accent="from-orange-500 to-amber-500">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                {depo.length === 0 && (
+                  <div className="col-span-full text-white/40 text-sm">Belum ada rate deposito.</div>
+                )}
+                {depo.map((d) => (
+                  <div key={d.id} className="relative bg-white/5 rounded-lg px-1.5 py-2 text-center border border-white/5">
+                    {d.is_promo && (
+                      <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-black font-bold px-1 py-0.5 rounded-full">★</span>
+                    )}
+                    <p className="text-[10px] text-white/60 uppercase tracking-wide leading-tight">{d.tenor_months}bln</p>
+                    <p className="text-base sm:text-lg font-extrabold text-amber-300 tabular-nums leading-tight">{fmtPct(d.interest_rate)}</p>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
         </div>
       </div>
 
@@ -152,11 +154,11 @@ function DisplayPage() {
 
 function Panel({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-4 flex flex-col min-h-0">
+    <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-3 flex flex-col min-h-0 overflow-hidden">
       <div className={`inline-block self-start text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r ${accent} mb-3`}>
         {title}
       </div>
-      <div className="flex-1 min-h-0">{children}</div>
+      <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
     </div>
   );
 }
