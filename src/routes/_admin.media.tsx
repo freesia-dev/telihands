@@ -68,18 +68,18 @@ function MediaPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Media Library</h1>
-        <p className="text-muted-foreground mt-1">Upload images and videos for the display slider.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">Media Library</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Upload images and videos for the display slider.</p>
       </div>
 
-      <div className="rounded-2xl border bg-card p-6 shadow-card-soft space-y-4">
-        <div className="grid md:grid-cols-3 gap-3">
-          <div className="md:col-span-2"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Promo Tabungan Prama" /></div>
+      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-card-soft space-y-4">
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="sm:col-span-2"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Promo Tabungan Prama" /></div>
           <div><Label>Image duration (sec)</Label><Input type="number" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} /></div>
         </div>
-        <div className="flex gap-3 items-center">
-          <Input ref={fileRef} type="file" accept="image/*,video/*" />
-          <Button onClick={upload} disabled={uploading} className="bg-gradient-brand text-primary-foreground">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <Input ref={fileRef} type="file" accept="image/*,video/*" className="flex-1" />
+          <Button onClick={upload} disabled={uploading} className="bg-gradient-brand text-primary-foreground w-full sm:w-auto">
             <Upload className="h-4 w-4 mr-2" />{uploading ? "Uploading..." : "Upload"}
           </Button>
         </div>
