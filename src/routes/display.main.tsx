@@ -76,7 +76,7 @@ function DisplayPage() {
       {/* Main area: media + side panels */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 min-h-0">
         {/* Media slider */}
-        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black/40 border border-white/10">
+        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black border border-white/10 flex items-center justify-center">
           <AnimatePresence mode="wait">
             {current && (
               <motion.div key={current.id}
@@ -86,9 +86,9 @@ function DisplayPage() {
                 transition={{ duration: 0.6 }}
                 className="absolute inset-0">
                 {current.media_type === "image" ? (
-                  <img src={current.file_url} alt={current.title} className="w-full h-full object-cover" />
+                  <img src={current.file_url} alt={current.title} className="w-full h-full object-contain" />
                 ) : (
-                  <video key={current.id} src={current.file_url} className="w-full h-full object-cover"
+                  <video key={current.id} src={current.file_url} className="w-full h-full object-contain"
                     autoPlay muted playsInline
                     onEnded={() => setIdx((i) => (i + 1) % media.length)} />
                 )}
@@ -106,23 +106,32 @@ function DisplayPage() {
         </div>
 
         {/* Right column: savings + deposito */}
-        <div className="grid grid-rows-2 gap-3 min-h-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 gap-3 min-h-0">
           <Panel title="Suku Bunga Tabungan" accent="from-blue-500 to-indigo-600">
-            <div className="space-y-2 overflow-auto">
+            <div className="grid gap-2 overflow-auto pr-1 h-full content-start">
+              {savings.length === 0 && (
+                <div className="text-white/40 text-sm">Belum ada produk tabungan.</div>
+              )}
               {savings.map((s) => (
-                <div key={s.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2.5">
-                  <span className="font-medium text-sm">{s.name}</span>
-                  <span className="text-xl font-bold text-amber-300">{fmtPct(s.interest_rate)}</span>
+                <div key={s.id} className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 transition rounded-xl px-3 sm:px-4 py-2.5 border border-white/5">
+                  <span className="font-medium text-sm sm:text-base truncate">{s.name}</span>
+                  <span className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-300 tabular-nums shrink-0">{fmtPct(s.interest_rate)}</span>
                 </div>
               ))}
             </div>
           </Panel>
           <Panel title="Suku Bunga Deposito" accent="from-orange-500 to-amber-500">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2 h-full content-start overflow-auto pr-1">
+              {depo.length === 0 && (
+                <div className="col-span-full text-white/40 text-sm">Belum ada rate deposito.</div>
+              )}
               {depo.map((d) => (
-                <div key={d.id} className="bg-white/5 rounded-lg px-3 py-2 text-center">
-                  <p className="text-xs text-white/60">{d.tenor_months} bulan {d.is_promo && "★"}</p>
-                  <p className="text-2xl font-extrabold text-amber-300">{fmtPct(d.interest_rate)}</p>
+                <div key={d.id} className="relative bg-white/5 hover:bg-white/10 transition rounded-xl px-2 py-3 text-center border border-white/5 flex flex-col items-center justify-center min-h-[88px]">
+                  {d.is_promo && (
+                    <span className="absolute top-1 right-1 text-[10px] bg-amber-400 text-black font-bold px-1.5 py-0.5 rounded-full">PROMO</span>
+                  )}
+                  <p className="text-[11px] sm:text-xs text-white/60 uppercase tracking-wide">{d.tenor_months} bulan</p>
+                  <p className="text-xl sm:text-2xl xl:text-3xl font-extrabold text-amber-300 tabular-nums leading-tight">{fmtPct(d.interest_rate)}</p>
                 </div>
               ))}
             </div>
