@@ -50,14 +50,14 @@ function DepositoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Deposito Rates</h1>
-          <p className="text-muted-foreground mt-1">Manage tenor and interest rates.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Deposito Rates</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Manage tenor and interest rates.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditing({ is_active: true, sort_order: items.length + 1, tenor_months: 1, min_amount: 8000000 })} className="bg-gradient-brand text-primary-foreground">
+            <Button onClick={() => setEditing({ is_active: true, sort_order: items.length + 1, tenor_months: 1, min_amount: 8000000 })} className="bg-gradient-brand text-primary-foreground w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />Add Rate
             </Button>
           </DialogTrigger>
@@ -80,12 +80,12 @@ function DepositoPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((d) => (
-          <div key={d.id} className="rounded-xl border bg-card p-5 shadow-card-soft">
+          <div key={d.id} className="rounded-xl border bg-card p-4 sm:p-5 shadow-card-soft">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold text-lg">{d.tenor_months} bulan</h3>
                   {d.is_promo && <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gradient-accent text-white"><Sparkles className="h-3 w-3" />Promo</span>}
                   {!d.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Inactive</span>}
@@ -97,7 +97,7 @@ function DepositoPage() {
                 <Button variant="ghost" size="icon" onClick={() => remove(d.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </div>
             </div>
-            <p className="text-4xl font-extrabold text-gradient-brand mt-3">{fmtPct(d.interest_rate)}<span className="text-sm font-medium text-muted-foreground"> p.a.</span></p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-gradient-brand mt-3 break-words">{fmtPct(d.interest_rate)}<span className="text-sm font-medium text-muted-foreground"> p.a.</span></p>
           </div>
         ))}
       </div>
