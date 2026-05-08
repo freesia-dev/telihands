@@ -30,6 +30,7 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-secondary/40">
+      {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}
       <aside className={cn("fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r flex flex-col transition-transform", open ? "translate-x-0" : "-translate-x-full lg:translate-x-0")}>
         <div className="p-4 border-b flex items-center gap-3">
           <img src={logo} alt="TDS" className="h-10 w-auto" />
