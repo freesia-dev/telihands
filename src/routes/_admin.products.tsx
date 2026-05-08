@@ -65,14 +65,14 @@ function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Savings Products</h1>
-          <p className="text-muted-foreground mt-1">Manage savings products and interest rates.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings Products</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Manage savings products and interest rates.</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditing({ is_active: true, sort_order: items.length + 1 })} className="bg-gradient-brand text-primary-foreground">
+            <Button onClick={() => setEditing({ is_active: true, sort_order: items.length + 1 })} className="bg-gradient-brand text-primary-foreground w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />Add Product
             </Button>
           </DialogTrigger>
@@ -97,19 +97,21 @@ function ProductsPage() {
 
       <div className="grid gap-3">
         {items.map((p) => (
-          <div key={p.id} className="rounded-xl border bg-card p-4 shadow-card-soft flex items-center justify-between gap-4 flex-wrap">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{p.name}</h3>
+          <div key={p.id} className="rounded-xl border bg-card p-4 shadow-card-soft flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold break-words">{p.name}</h3>
                 {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Inactive</span>}
               </div>
-              <p className="text-sm text-muted-foreground">Min {fmtIDR(p.min_balance)} • {p.description ?? "—"}</p>
+              <p className="text-sm text-muted-foreground break-words">Min {fmtIDR(p.min_balance)} • {p.description ?? "—"}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-gradient-brand">{fmtPct(p.interest_rate)}</span>
-              <Switch checked={p.is_active} onCheckedChange={() => toggle(p)} />
-              <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+              <span className="text-xl sm:text-2xl font-bold text-gradient-brand">{fmtPct(p.interest_rate)}</span>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Switch checked={p.is_active} onCheckedChange={() => toggle(p)} />
+                <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
             </div>
           </div>
         ))}
