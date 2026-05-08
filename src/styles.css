@@ -153,3 +153,25 @@
     color: var(--color-foreground);
   }
 }
+
+@layer base {
+  html, body { font-family: 'Poppins', 'Inter', system-ui, sans-serif; }
+}
+
+.bg-gradient-brand { background: var(--gradient-brand); }
+.bg-gradient-accent { background: var(--gradient-accent); }
+.bg-gradient-hero { background: var(--gradient-hero); }
+.shadow-brand { box-shadow: var(--shadow-brand); }
+.shadow-card-soft { box-shadow: var(--shadow-card); }
+.text-gradient-brand {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 40s linear infinite; }
