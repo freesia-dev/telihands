@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRunningTextRouteImport } from './routes/_admin.running-text'
 import { Route as AdminProductsRouteImport } from './routes/_admin.products'
+import { Route as AdminMediaRouteImport } from './routes/_admin.media'
 import { Route as AdminDepositoRouteImport } from './routes/_admin.deposito'
 import { Route as AdminDashboardRouteImport } from './routes/_admin.dashboard'
 
@@ -41,6 +42,11 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMediaRoute = AdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDepositoRoute = AdminDepositoRouteImport.update({
   id: '/deposito',
   path: '/deposito',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard': typeof AdminDashboardRoute
   '/deposito': typeof AdminDepositoRoute
+  '/media': typeof AdminMediaRoute
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof AdminDashboardRoute
   '/deposito': typeof AdminDepositoRoute
+  '/media': typeof AdminMediaRoute
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_admin/dashboard': typeof AdminDashboardRoute
   '/_admin/deposito': typeof AdminDepositoRoute
+  '/_admin/media': typeof AdminMediaRoute
   '/_admin/products': typeof AdminProductsRoute
   '/_admin/running-text': typeof AdminRunningTextRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/deposito'
+    | '/media'
     | '/products'
     | '/running-text'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/deposito'
+    | '/media'
     | '/products'
     | '/running-text'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_admin/dashboard'
     | '/_admin/deposito'
+    | '/_admin/media'
     | '/_admin/products'
     | '/_admin/running-text'
   fileRoutesById: FileRoutesById
@@ -149,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/media': {
+      id: '/_admin/media'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof AdminMediaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/deposito': {
       id: '/_admin/deposito'
       path: '/deposito'
@@ -169,6 +188,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDepositoRoute: typeof AdminDepositoRoute
+  AdminMediaRoute: typeof AdminMediaRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRunningTextRoute: typeof AdminRunningTextRoute
 }
@@ -176,6 +196,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDepositoRoute: AdminDepositoRoute,
+  AdminMediaRoute: AdminMediaRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminRunningTextRoute: AdminRunningTextRoute,
 }
