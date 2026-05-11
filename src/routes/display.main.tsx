@@ -104,7 +104,7 @@ function DisplayPage() {
       {/* Main area */}
       <main className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-10 gap-4 px-4 md:px-10 pb-4 min-h-0">
         {/* LEFT 70% — media */}
-        <section className="lg:col-span-65 relative rounded-3xl overflow-hidden glass-card pulse-glow flex items-center justify-center lg:col-span-6">
+        <section className="lg:col-span-6 relative rounded-3xl overflow-hidden glass-card pulse-glow flex items-center justify-center">
           <AnimatePresence mode="wait">
             {current && (
               <motion.div key={current.id}
