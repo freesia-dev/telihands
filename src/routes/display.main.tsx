@@ -147,14 +147,14 @@ function DisplayPage() {
         {/* RIGHT 30% — info panels */}
         <aside className="lg:col-span-4 flex flex-col gap-[clamp(8px,1vw,20px)] min-h-0">
           <Panel title="SUKU BUNGA TABUNGAN" icon="wallet">
-            <div className="flex flex-col h-full justify-around">
+            <div className="flex flex-col h-full justify-between gap-[clamp(2px,0.3vw,8px)]">
               {savings.length === 0 && (
                 <div className="text-[color:var(--tds-text-soft)] text-sm">Belum ada produk tabungan.</div>
               )}
               {savings.map((s, i) => (
-                <div key={s.id} className={`flex items-center justify-between gap-3 py-[clamp(4px,0.6vw,10px)] ${i !== savings.length - 1 ? "border-b border-white/5" : ""}`}>
-                  <span className="font-display text-white/95 truncate" style={{ fontSize: "clamp(13px,1.1vw,22px)" }}>{s.name}</span>
-                  <span className="font-numeric font-extrabold text-tds-gold tabular-nums shrink-0" style={{ fontSize: "clamp(16px,1.5vw,28px)" }}>{fmtPct(s.interest_rate)}</span>
+                <div key={s.id} className={`flex items-center justify-between gap-3 min-h-0 py-[clamp(2px,0.35vw,8px)] ${i !== savings.length - 1 ? "border-b border-white/5" : ""}`}>
+                  <span className="font-display text-white/95 truncate" style={{ fontSize: `clamp(11px, ${Math.max(1.4 - savings.length * 0.05, 0.7)}vw, 20px)` }}>{s.name}</span>
+                  <span className="font-numeric font-extrabold text-tds-gold tabular-nums shrink-0" style={{ fontSize: `clamp(13px, ${Math.max(1.8 - savings.length * 0.06, 0.95)}vw, 26px)` }}>{fmtPct(s.interest_rate)}</span>
                 </div>
               ))}
             </div>
