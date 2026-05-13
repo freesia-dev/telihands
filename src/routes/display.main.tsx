@@ -161,20 +161,43 @@ function DisplayPage() {
           </Panel>
 
           <Panel title="SUKU BUNGA DEPOSITO" icon="vault">
-            <div className="grid gap-[clamp(6px,0.8vw,12px)] h-full content-center" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(clamp(70px,8vw,110px), 1fr))" }}>
-              {depo.length === 0 && (
-                <div className="col-span-full text-[color:var(--tds-text-soft)] text-sm">Belum ada rate deposito.</div>
-              )}
-              {depo.map((d) => (
-                <div key={d.id} className="relative bg-white/[0.04] rounded-xl px-2 py-[clamp(6px,0.8vw,14px)] text-center border border-tds-gold/15">
-                  {d.is_promo && (
-                    <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-[color:var(--tds-gold)] text-[#071229] font-bold px-1.5 py-0.5 rounded-full shadow">★</span>
-                  )}
-                  <p className="text-white/80 uppercase tracking-wider font-display font-semibold leading-tight" style={{ fontSize: "clamp(9px,0.75vw,14px)" }}>{d.tenor_months} BULAN</p>
-                  <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-tight mt-1" style={{ fontSize: "clamp(16px,1.7vw,32px)" }}>{fmtPct(d.interest_rate)}</p>
+            {(() => {
+              if (depo.length === 0) {
+                return <div className="text-[color:var(--tds-text-soft)] text-sm">Belum ada rate deposito.</div>;
+              }
+              const topIdx = depo.reduce((best, d, i, arr) => (d.interest_rate > arr[best].interest_rate ? i : best), 0);
+              const top = depo[topIdx];
+              const rest = depo.filter((_, i) => i !== topIdx);
+              return (
+                <div className="flex h-full gap-[clamp(6px,0.8vw,12px)] min-h-0">
+                  {/* Featured highest */}
+                  <div className="relative flex flex-col items-center justify-center text-center rounded-2xl px-[clamp(6px,0.8vw,14px)] py-[clamp(8px,1vw,16px)] shrink-0 basis-[42%]"
+                    style={{
+                      background: "linear-gradient(145deg, rgba(212,175,55,0.22), rgba(247,215,116,0.08))",
+                      border: "1.5px solid var(--tds-gold)",
+                      boxShadow: "0 0 24px rgba(212,175,55,0.35), inset 0 0 16px rgba(212,175,55,0.12)",
+                    }}>
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[color:var(--tds-gold)] text-[#071229] font-display font-extrabold tracking-wider px-2 py-0.5 rounded-full shadow"
+                      style={{ fontSize: "clamp(8px,0.65vw,12px)" }}>★ TERTINGGI</span>
+                    <p className="text-white/85 uppercase tracking-wider font-display font-semibold leading-tight mt-1" style={{ fontSize: "clamp(10px,0.85vw,16px)" }}>{top.tenor_months} BULAN</p>
+                    <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-none mt-1" style={{ fontSize: "clamp(24px,2.8vw,52px)", textShadow: "0 0 16px rgba(247,215,116,0.5)" }}>{fmtPct(top.interest_rate)}</p>
+                    <p className="text-white/60 font-display tracking-wide mt-1" style={{ fontSize: "clamp(7px,0.55vw,11px)" }}>p.a</p>
+                  </div>
+                  {/* Others */}
+                  <div className="flex-1 min-w-0 grid gap-[clamp(4px,0.5vw,10px)] content-center" style={{ gridTemplateColumns: rest.length <= 2 ? "1fr" : "1fr 1fr" }}>
+                    {rest.map((d) => (
+                      <div key={d.id} className="relative bg-white/[0.04] rounded-xl px-2 py-[clamp(4px,0.6vw,10px)] text-center border border-tds-gold/15 flex flex-col justify-center">
+                        {d.is_promo && (
+                          <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-[color:var(--tds-gold)] text-[#071229] font-bold px-1.5 py-0.5 rounded-full shadow">★</span>
+                        )}
+                        <p className="text-white/80 uppercase tracking-wider font-display font-semibold leading-tight" style={{ fontSize: "clamp(8px,0.65vw,12px)" }}>{d.tenor_months} BULAN</p>
+                        <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-tight mt-0.5" style={{ fontSize: "clamp(13px,1.3vw,24px)" }}>{fmtPct(d.interest_rate)}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </Panel>
         </aside>
       </main>
