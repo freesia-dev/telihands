@@ -169,9 +169,9 @@ function DisplayPage() {
               const top = depo[topIdx];
               const rest = depo.filter((_, i) => i !== topIdx);
               return (
-                <div className="flex h-full gap-[clamp(6px,0.8vw,12px)] min-h-0">
+                <div className="flex h-full gap-[clamp(6px,0.8vw,12px)] min-h-0 pt-[clamp(8px,1vw,16px)]">
                   {/* Featured highest */}
-                  <div className="relative flex flex-col items-center justify-center text-center rounded-2xl px-[clamp(6px,0.8vw,14px)] py-[clamp(8px,1vw,16px)] shrink-0 basis-[42%]"
+                  <div className="relative flex flex-col items-center justify-center text-center rounded-2xl px-[clamp(6px,0.8vw,14px)] pt-[clamp(14px,1.6vw,22px)] pb-[clamp(8px,1vw,16px)] shrink-0 basis-[42%]"
                     style={{
                       background: "linear-gradient(145deg, rgba(212,175,55,0.22), rgba(247,215,116,0.08))",
                       border: "1.5px solid var(--tds-gold)",
