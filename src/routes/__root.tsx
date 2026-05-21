@@ -78,10 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "TDS — Inform, Engage, Inspire. Digital signage platform for Bank KCP Telihan." },
       { name: "author", content: "Bank KCP Telihan" },
       { property: "og:title", content: "Telihan Digital Signage" },
-      { property: "og:description", content: "Modern banking digital signage for Android TV." },
+      { property: "og:description", content: "TDS — Inform, Engage, Inspire. Digital signage platform for Bank KCP Telihan." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Telihan Digital Signage" },
+      { name: "twitter:description", content: "TDS — Inform, Engage, Inspire. Digital signage platform for Bank KCP Telihan." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7b1faf50-62a0-4bac-b7fa-f38884dc98d4" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7b1faf50-62a0-4bac-b7fa-f38884dc98d4" },
     ],
     links: [
       {
