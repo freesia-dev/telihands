@@ -102,9 +102,9 @@ function DisplayPage() {
       </header>
 
       {/* Main area */}
-      <main className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-10 gap-[clamp(8px,1vw,20px)] px-[clamp(12px,2vw,40px)] pb-[clamp(8px,1vw,20px)] min-h-0">
+      <main className="relative z-10 flex-1 grid grid-cols-10 gap-[clamp(8px,1vw,20px)] px-[clamp(12px,2vw,40px)] pb-[clamp(8px,1vw,20px)] min-h-0">
         {/* LEFT 70% — media */}
-        <section className="lg:col-span-6 relative rounded-3xl overflow-hidden glass-card pulse-glow flex items-center justify-center">
+        <section className="col-span-6 relative rounded-3xl overflow-hidden glass-card pulse-glow flex items-center justify-center">
           <AnimatePresence mode="wait">
             {current && (
               <motion.div key={current.id}
@@ -145,7 +145,7 @@ function DisplayPage() {
         </section>
 
         {/* RIGHT 30% — info panels */}
-        <aside className="lg:col-span-4 flex flex-col gap-[clamp(8px,1vw,20px)] min-h-0">
+        <aside className="col-span-4 flex flex-col gap-[clamp(8px,1vw,20px)] min-h-0">
           <Panel title="SUKU BUNGA TABUNGAN" icon="wallet">
             <div className="flex flex-col h-full justify-between gap-[clamp(2px,0.3vw,8px)]">
               {savings.length === 0 && (
