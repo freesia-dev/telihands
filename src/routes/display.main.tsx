@@ -55,10 +55,11 @@ function DisplayPage() {
 
   const current = media[idx % Math.max(media.length, 1)];
   const tickerText = ticker.map((t) => t.content).join("   •   ") || "Selamat datang di Bank KCP Telihan";
-  const hhmm = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-  const ss = now.toLocaleTimeString("id-ID", { second: "2-digit" }).slice(-2);
-  const weekday = now.toLocaleDateString("id-ID", { weekday: "long" }).toUpperCase();
-  const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }).toUpperCase();
+  const TZ = "Asia/Makassar"; // WITA
+  const hhmm = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  const ss = now.toLocaleTimeString("id-ID", { second: "2-digit", timeZone: TZ }).slice(-2);
+  const weekday = now.toLocaleDateString("id-ID", { weekday: "long", timeZone: TZ }).toUpperCase();
+  const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).toUpperCase();
   const tickerItems = ticker.length > 0 ? ticker.map((t) => t.content) : [
     "Deposito mulai 2,25% p.a",
     "Tabungan Simpeda mudah & aman",
