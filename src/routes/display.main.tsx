@@ -125,7 +125,7 @@ function DisplayPage() {
                   <img src={current.file_url} alt={current.title} className="relative max-w-full max-h-full w-auto h-auto object-contain" />
                 ) : (
                   <video key={current.id} src={current.file_url} className="relative max-w-full max-h-full w-auto h-auto object-contain"
-                    autoPlay muted playsInline
+                    autoPlay playsInline
                     onEnded={() => setIdx((i) => (i + 1) % media.length)} />
                 )}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#071229] via-[#071229]/70 to-transparent p-[clamp(12px,1.5vw,28px)]">
