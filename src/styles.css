@@ -240,3 +240,27 @@
   background-repeat: repeat-y;
   background-size: 100% 120px;
 }
+
+/* ============ TV MODE — ringan untuk Android TV / WebView lemah ============ */
+/* Matikan semua efek mahal (blur, backdrop-filter, glow, animasi besar). */
+.tv-mode .glass-card {
+  background: rgba(13, 42, 99, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none;
+}
+.tv-mode .clock-glow { text-shadow: none; }
+.tv-mode .pulse-glow,
+.tv-mode .float-slow { animation: none !important; }
+.tv-mode .dayak-overlay,
+.tv-mode .dayak-side { display: none !important; }
+.tv-mode .tv-ambient { display: none !important; }
+.tv-mode .animate-marquee {
+  animation: marquee 60s linear infinite;
+  will-change: transform;
+  transform: translate3d(0,0,0);
+}
+.tv-mode .tv-fade {
+  transition: opacity 400ms ease;
+}
