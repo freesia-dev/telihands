@@ -26,6 +26,17 @@ function DisplayPage() {
   const [idx, setIdx] = useState(0);
   const [now, setNow] = useState(new Date());
 
+  // Auto-redirect ke mode TV jika user agent menunjukkan Android TV / smart TV.
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const ua = navigator.userAgent || "";
+    const isTv = /\b(GoogleTV|Android TV|SMART-TV|SmartTV|AQUOS|BRAVIA|AFT|Tizen|Web0S|WebOS|HbbTV|NetCast|VIDAA)\b/i.test(ua)
+      || (/Android/i.test(ua) && !/Mobile/i.test(ua));
+    if (isTv && !/[?&]nofallback=1/.test(location.search)) {
+      location.replace("/display/tv");
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       const [m, s, d, t] = await Promise.all([
