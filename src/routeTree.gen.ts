@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DisplayTvRouteImport } from './routes/display.tv'
 import { Route as DisplayMainRouteImport } from './routes/display.main'
 import { Route as AdminRunningTextRouteImport } from './routes/_admin.running-text'
 import { Route as AdminProductsRouteImport } from './routes/_admin.products'
@@ -31,6 +32,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisplayTvRoute = DisplayTvRouteImport.update({
+  id: '/display/tv',
+  path: '/display/tv',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisplayMainRoute = DisplayMainRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
   '/display/main': typeof DisplayMainRoute
+  '/display/tv': typeof DisplayTvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/products': typeof AdminProductsRoute
   '/running-text': typeof AdminRunningTextRoute
   '/display/main': typeof DisplayMainRoute
+  '/display/tv': typeof DisplayTvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_admin/products': typeof AdminProductsRoute
   '/_admin/running-text': typeof AdminRunningTextRoute
   '/display/main': typeof DisplayMainRoute
+  '/display/tv': typeof DisplayTvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/running-text'
     | '/display/main'
+    | '/display/tv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/running-text'
     | '/display/main'
+    | '/display/tv'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_admin/products'
     | '/_admin/running-text'
     | '/display/main'
+    | '/display/tv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   DisplayMainRoute: typeof DisplayMainRoute
+  DisplayTvRoute: typeof DisplayTvRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/display/tv': {
+      id: '/display/tv'
+      path: '/display/tv'
+      fullPath: '/display/tv'
+      preLoaderRoute: typeof DisplayTvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/display/main': {
@@ -228,17 +248,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   DisplayMainRoute: DisplayMainRoute,
+  DisplayTvRoute: DisplayTvRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

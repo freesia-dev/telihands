@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AnimatePresence, motion } from "framer-motion";
 import { fmtPct } from "@/lib/format";
 import logo from "@/assets/tds-logo.png";
 
-export const Route = createFileRoute("/display/main")({
+export const Route = createFileRoute("/display/tv")({
   head: () => ({ meta: [
-    { title: "Display — Telihan Digital Signage" },
+    { title: "Display TV — Telihan Digital Signage" },
     { name: "viewport", content: "width=device-width, initial-scale=1, user-scalable=no" },
   ] }),
-  component: DisplayPage,
+  component: DisplayTvPage,
 });
 
 type Media = { id: string; title: string; file_url: string; media_type: "image" | "video"; duration_seconds: number };
@@ -18,24 +17,19 @@ type Saving = { id: string; name: string; interest_rate: number };
 type Depo = { id: string; tenor_months: number; interest_rate: number; is_promo: boolean };
 type Ticker = { id: string; content: string };
 
-function DisplayPage() {
+const TZ = "Asia/Makassar";
+const STALL_TIMEOUT_MS = 3000;
+const AUTO_RELOAD_MS = 30 * 60 * 1000;
+
+function DisplayTvPage() {
   const [media, setMedia] = useState<Media[]>([]);
   const [savings, setSavings] = useState<Saving[]>([]);
   const [depo, setDepo] = useState<Depo[]>([]);
   const [ticker, setTicker] = useState<Ticker[]>([]);
   const [idx, setIdx] = useState(0);
   const [now, setNow] = useState(new Date());
-
-  // Auto-redirect ke mode TV jika user agent menunjukkan Android TV / smart TV.
-  useEffect(() => {
-    if (typeof navigator === "undefined") return;
-    const ua = navigator.userAgent || "";
-    const isTv = /\b(GoogleTV|Android TV|SMART-TV|SmartTV|AQUOS|BRAVIA|AFT|Tizen|Web0S|WebOS|HbbTV|NetCast|VIDAA)\b/i.test(ua)
-      || (/Android/i.test(ua) && !/Mobile/i.test(ua));
-    if (isTv && !/[?&]nofallback=1/.test(location.search)) {
-      location.replace("/display/tv");
-    }
-  }, []);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -53,20 +47,37 @@ function DisplayPage() {
     load();
     const refresh = setInterval(load, 60_000);
     const clock = setInterval(() => setNow(new Date()), 1000);
-    return () => { clearInterval(refresh); clearInterval(clock); };
+    const reload = setTimeout(() => location.reload(), AUTO_RELOAD_MS);
+    return () => { clearInterval(refresh); clearInterval(clock); clearTimeout(reload); };
   }, []);
+
+  const next = () => setIdx((i) => (media.length ? (i + 1) % media.length : 0));
 
   useEffect(() => {
     if (media.length === 0) return;
     const cur = media[idx % media.length];
-    const ms = (cur.media_type === "image" ? cur.duration_seconds : Math.max(cur.duration_seconds, 8)) * 1000;
-    const t = setTimeout(() => setIdx((i) => (i + 1) % media.length), ms);
-    return () => clearTimeout(t);
+    if (cur.media_type === "image") {
+      const t = setTimeout(next, Math.max(cur.duration_seconds, 5) * 1000);
+      return () => clearTimeout(t);
+    }
+    // video — fallback ditangani via event handler; tetap pasang hard timeout maksimum
+    const hardMax = setTimeout(next, Math.max(cur.duration_seconds, 8) * 1000 + 5000);
+    return () => clearTimeout(hardMax);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, media]);
 
+  const armStallTimer = () => {
+    if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    stallTimerRef.current = setTimeout(() => {
+      console.warn("[tv] video stalled, skipping");
+      next();
+    }, STALL_TIMEOUT_MS);
+  };
+  const clearStallTimer = () => {
+    if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
+  };
+
   const current = media[idx % Math.max(media.length, 1)];
-  const tickerText = ticker.map((t) => t.content).join("   •   ") || "Selamat datang di Bank KCP Telihan";
-  const TZ = "Asia/Makassar"; // WITA
   const hhmm = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
   const ss = now.toLocaleTimeString("id-ID", { second: "2-digit", timeZone: TZ }).slice(-2);
   const weekday = now.toLocaleDateString("id-ID", { weekday: "long", timeZone: TZ }).toUpperCase();
@@ -79,19 +90,11 @@ function DisplayPage() {
   ];
 
   return (
-    <div className="fixed inset-0 bg-tds text-[color:var(--tds-text)] overflow-hidden flex flex-col">
-      {/* Ambient ethnic overlay */}
-      <div className="pointer-events-none absolute inset-0 dayak-overlay opacity-100" />
-      {/* Side dayak motif columns */}
-      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-10 md:w-14 dayak-side dayak-side-left opacity-70" />
-      <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-10 md:w-14 dayak-side dayak-side-right opacity-70" />
-      <div className="pointer-events-none absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-[#3B82F6]/15 blur-3xl float-slow" />
-      <div className="pointer-events-none absolute -bottom-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/10 blur-3xl float-slow" />
-
+    <div className="tv-mode fixed inset-0 bg-tds text-[color:var(--tds-text)] overflow-hidden flex flex-col">
       {/* Header */}
       <header className="relative z-10 px-[clamp(16px,2vw,40px)] py-[clamp(10px,1.2vw,20px)] flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <img src={logo} alt="TDS" className="h-[clamp(36px,4vw,64px)] w-auto drop-shadow-[0_4px_12px_rgba(212,175,55,0.35)]" />
+          <img src={logo} alt="TDS" className="h-[clamp(36px,4vw,64px)] w-auto" />
           <div className="leading-tight">
             <p className="font-display font-extrabold tracking-wide" style={{ fontSize: "clamp(18px,2vw,32px)" }}>
               <span className="text-white">BANK</span><span className="text-tds-gold">ALTIMTARA</span>
@@ -113,53 +116,53 @@ function DisplayPage() {
         </div>
       </header>
 
-      {/* Main area */}
+      {/* Main */}
       <main
         className="relative z-10 flex-1 gap-[clamp(8px,1vw,20px)] px-[clamp(12px,2vw,40px)] pb-[clamp(8px,1vw,20px)] min-h-0"
         style={{ display: "grid", gridTemplateColumns: "6fr 4fr" }}
       >
-        {/* LEFT 60% — media */}
-        <section style={{ minWidth: 0, minHeight: 0 }} className="relative rounded-3xl overflow-hidden glass-card pulse-glow flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {current && (
-              <motion.div key={current.id}
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.99 }}
-                transition={{ duration: 0.9, ease: "easeOut" }}
-                className="absolute inset-0 flex items-center justify-center bg-black/60 overflow-hidden">
-                {/* Blurred background for non-cropping fit */}
-                {current.media_type === "image" ? (
-                  <img src={current.file_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50" />
-                ) : null}
-                {current.media_type === "image" ? (
-                  <img src={current.file_url} alt={current.title} className="relative max-w-full max-h-full w-auto h-auto object-contain" />
-                ) : (
-                  <video key={current.id} src={current.file_url} className="relative max-w-full max-h-full w-auto h-auto object-contain"
-                    autoPlay playsInline
-                    onEnded={() => setIdx((i) => (i + 1) % media.length)} />
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#071229] via-[#071229]/70 to-transparent p-[clamp(12px,1.5vw,28px)]">
-                  <div className="h-px w-[clamp(40px,4vw,80px)] bg-[color:var(--tds-gold)] mb-2" />
-                  <p className="font-display font-bold text-white drop-shadow truncate" style={{ fontSize: "clamp(16px,1.8vw,32px)" }}>{current.title}</p>
-                </div>
-              </motion.div>
-            )}
-            {!current && (
-              <div className="absolute inset-0 flex items-center justify-center text-[color:var(--tds-text-soft)] text-sm">
-                Upload media in the admin panel to display promotions here.
+        {/* LEFT — media */}
+        <section style={{ minWidth: 0, minHeight: 0 }} className="relative rounded-2xl overflow-hidden glass-card flex items-center justify-center">
+          {current ? (
+            <div key={current.id} className="absolute inset-0 flex items-center justify-center bg-black overflow-hidden tv-fade">
+              {current.media_type === "image" ? (
+                <img
+                  src={current.file_url}
+                  alt={current.title}
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain"
+                  onError={next}
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  key={current.id}
+                  src={current.file_url}
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain"
+                  autoPlay
+                  playsInline
+                  preload="auto"
+                  onLoadStart={armStallTimer}
+                  onWaiting={armStallTimer}
+                  onStalled={armStallTimer}
+                  onCanPlay={clearStallTimer}
+                  onPlaying={clearStallTimer}
+                  onEnded={() => { clearStallTimer(); next(); }}
+                  onError={() => { clearStallTimer(); next(); }}
+                />
+              )}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-[clamp(10px,1.4vw,24px)]">
+                <div className="h-px w-[clamp(40px,4vw,80px)] bg-[color:var(--tds-gold)] mb-2" />
+                <p className="font-display font-bold text-white truncate" style={{ fontSize: "clamp(16px,1.8vw,32px)" }}>{current.title}</p>
               </div>
-            )}
-          </AnimatePresence>
-
-          {/* corner ornament */}
-          <div className="pointer-events-none absolute top-4 left-4 w-10 h-10 border-t-2 border-l-2 border-[color:var(--tds-gold)]/60 rounded-tl-xl" />
-          <div className="pointer-events-none absolute top-4 right-4 w-10 h-10 border-t-2 border-r-2 border-[color:var(--tds-gold)]/60 rounded-tr-xl" />
-          <div className="pointer-events-none absolute bottom-4 left-4 w-10 h-10 border-b-2 border-l-2 border-[color:var(--tds-gold)]/60 rounded-bl-xl" />
-          <div className="pointer-events-none absolute bottom-4 right-4 w-10 h-10 border-b-2 border-r-2 border-[color:var(--tds-gold)]/60 rounded-br-xl" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-[color:var(--tds-text-soft)] text-sm">
+              Belum ada media aktif.
+            </div>
+          )}
         </section>
 
-        {/* RIGHT 40% — info panels */}
+        {/* RIGHT — info */}
         <aside style={{ minWidth: 0, minHeight: 0 }} className="flex flex-col gap-[clamp(8px,1vw,20px)]">
           <Panel title="SUKU BUNGA TABUNGAN" icon="wallet">
             <div className="flex flex-col h-full justify-between gap-[clamp(2px,0.3vw,8px)]">
@@ -167,7 +170,7 @@ function DisplayPage() {
                 <div className="text-[color:var(--tds-text-soft)] text-sm">Belum ada produk tabungan.</div>
               )}
               {savings.map((s, i) => (
-                <div key={s.id} className={`flex items-center justify-between gap-3 min-h-0 py-[clamp(2px,0.35vw,8px)] ${i !== savings.length - 1 ? "border-b border-white/5" : ""}`}>
+                <div key={s.id} className={`flex items-center justify-between gap-3 min-h-0 py-[clamp(2px,0.35vw,8px)] ${i !== savings.length - 1 ? "border-b border-white/10" : ""}`}>
                   <span className="font-display text-white/95 truncate" style={{ fontSize: `clamp(11px, ${Math.max(1.4 - savings.length * 0.05, 0.7)}vw, 20px)` }}>{s.name}</span>
                   <span className="font-numeric font-extrabold text-tds-gold tabular-nums shrink-0" style={{ fontSize: `clamp(13px, ${Math.max(1.8 - savings.length * 0.06, 0.95)}vw, 26px)` }}>{fmtPct(s.interest_rate)}</span>
                 </div>
@@ -185,25 +188,19 @@ function DisplayPage() {
               const rest = depo.filter((_, i) => i !== topIdx);
               return (
                 <div className="flex h-full gap-[clamp(6px,0.8vw,12px)] min-h-0 pt-[clamp(8px,1vw,16px)]">
-                  {/* Featured highest */}
                   <div className="relative flex flex-col items-center justify-center text-center rounded-2xl px-[clamp(6px,0.8vw,14px)] pt-[clamp(14px,1.6vw,22px)] pb-[clamp(8px,1vw,16px)] shrink-0 basis-[42%]"
-                    style={{
-                      background: "linear-gradient(145deg, rgba(212,175,55,0.22), rgba(247,215,116,0.08))",
-                      border: "1.5px solid var(--tds-gold)",
-                      boxShadow: "0 0 24px rgba(212,175,55,0.35), inset 0 0 16px rgba(212,175,55,0.12)",
-                    }}>
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[color:var(--tds-gold)] text-[#071229] font-display font-extrabold tracking-wider px-2 py-0.5 rounded-full shadow"
+                    style={{ background: "rgba(212,175,55,0.18)", border: "1.5px solid var(--tds-gold)" }}>
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[color:var(--tds-gold)] text-[#071229] font-display font-extrabold tracking-wider px-2 py-0.5 rounded-full"
                       style={{ fontSize: "clamp(8px,0.65vw,12px)" }}>★ TERTINGGI</span>
                     <p className="text-white/85 uppercase tracking-wider font-display font-semibold leading-tight mt-1" style={{ fontSize: "clamp(10px,0.85vw,16px)" }}>{top.tenor_months} BULAN</p>
-                    <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-none mt-1" style={{ fontSize: "clamp(24px,2.8vw,52px)", textShadow: "0 0 16px rgba(247,215,116,0.5)" }}>{fmtPct(top.interest_rate)}</p>
+                    <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-none mt-1" style={{ fontSize: "clamp(24px,2.8vw,52px)" }}>{fmtPct(top.interest_rate)}</p>
                     <p className="text-white/60 font-display tracking-wide mt-1" style={{ fontSize: "clamp(7px,0.55vw,11px)" }}>p.a</p>
                   </div>
-                  {/* Others */}
                   <div className="flex-1 min-w-0 grid gap-[clamp(4px,0.5vw,10px)] content-center" style={{ gridTemplateColumns: rest.length <= 2 ? "1fr" : "1fr 1fr" }}>
                     {rest.map((d) => (
-                      <div key={d.id} className="relative bg-white/[0.04] rounded-xl px-2 py-[clamp(4px,0.6vw,10px)] text-center border border-tds-gold/15 flex flex-col justify-center">
+                      <div key={d.id} className="relative bg-white/[0.06] rounded-xl px-2 py-[clamp(4px,0.6vw,10px)] text-center border border-tds-gold/20 flex flex-col justify-center">
                         {d.is_promo && (
-                          <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-[color:var(--tds-gold)] text-[#071229] font-bold px-1.5 py-0.5 rounded-full shadow">★</span>
+                          <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-[color:var(--tds-gold)] text-[#071229] font-bold px-1.5 py-0.5 rounded-full">★</span>
                         )}
                         <p className="text-white/80 uppercase tracking-wider font-display font-semibold leading-tight" style={{ fontSize: "clamp(8px,0.65vw,12px)" }}>{d.tenor_months} BULAN</p>
                         <p className="font-numeric font-extrabold text-tds-gold tabular-nums leading-tight mt-0.5" style={{ fontSize: "clamp(13px,1.3vw,24px)" }}>{fmtPct(d.interest_rate)}</p>
@@ -219,11 +216,8 @@ function DisplayPage() {
 
       {/* Ticker */}
       <footer className="relative z-10 flex items-center overflow-hidden border-t border-tds-gold/30"
-        style={{ height: "clamp(40px,4vw,72px)", maskImage: "linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent)" }}
+        style={{ height: "clamp(40px,4vw,72px)", background: "linear-gradient(90deg, #071229 0%, #0D2A63 50%, #071229 100%)" }}
       >
-        <div className="absolute inset-0 -z-10"
-        style={{ background: "linear-gradient(90deg, #071229 0%, #0D2A63 50%, #071229 100%)" }}>
-        </div>
         <div className="shrink-0 h-full px-4 flex items-center">
           <span className="text-tds-gold" style={{ fontSize: "clamp(16px,1.5vw,28px)" }}>✦</span>
         </div>
@@ -240,15 +234,13 @@ function DisplayPage() {
           ))}
         </div>
       </footer>
-      {/* Divider line above footer */}
-      <div className="pointer-events-none absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-tds-gold to-transparent" style={{ bottom: "clamp(40px,4vw,72px)" }} />
     </div>
   );
 }
 
 function Panel({ title, icon, children }: { title: string; icon?: "wallet" | "vault"; children: React.ReactNode }) {
   return (
-    <div className="glass-card rounded-[20px] p-[clamp(10px,1.2vw,24px)] flex flex-col min-h-0 overflow-hidden flex-1">
+    <div className="glass-card rounded-[18px] p-[clamp(10px,1.2vw,24px)] flex flex-col min-h-0 overflow-hidden flex-1">
       <div className="flex items-center gap-3 mb-2">
         <div className="rounded-full border border-tds-gold/50 flex items-center justify-center text-tds-gold shrink-0"
           style={{ width: "clamp(28px,2.4vw,42px)", height: "clamp(28px,2.4vw,42px)", fontSize: "clamp(14px,1.2vw,20px)" }}>
