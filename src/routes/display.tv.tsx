@@ -28,8 +28,11 @@ function DisplayTvPage() {
   const [ticker, setTicker] = useState<Ticker[]>([]);
   const [idx, setIdx] = useState(0);
   const [now, setNow] = useState(new Date());
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // URL hasil prefetch (blob) per media.id — di-cache di memori, jadi file
+  // hanya di-download SEKALI per sesi, sisanya dipakai ulang dari RAM.
+  const [blobUrls, setBlobUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +54,36 @@ function DisplayTvPage() {
     return () => { clearInterval(refresh); clearInterval(clock); clearTimeout(reload); };
   }, []);
 
+  // Prefetch tiap file media ke blob URL — sekali per id selama sesi hidup.
+  // Kalau daftar media berubah (item dihapus admin), revoke blob lama supaya RAM
+  // tidak menumpuk.
+  useEffect(() => {
+    let cancelled = false;
+    const activeIds = new Set(media.map((m) => m.id));
+    media.forEach((m) => {
+      if (blobUrls[m.id]) return;
+      fetch(m.file_url, { cache: "force-cache" })
+        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
+        .then((b) => {
+          if (cancelled) return;
+          const url = URL.createObjectURL(b);
+          setBlobUrls((prev) => (prev[m.id] ? prev : { ...prev, [m.id]: url }));
+        })
+        .catch((e) => console.warn("[tv] prefetch gagal", m.title, e));
+    });
+    // bersihkan blob untuk media yang sudah dihapus
+    setBlobUrls((prev) => {
+      let changed = false;
+      const next: Record<string, string> = {};
+      for (const [id, url] of Object.entries(prev)) {
+        if (activeIds.has(id)) next[id] = url;
+        else { URL.revokeObjectURL(url); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+    return () => { cancelled = true; };
+  }, [media]);
+
   const next = () => setIdx((i) => (media.length ? (i + 1) % media.length : 0));
 
   useEffect(() => {
@@ -60,10 +93,24 @@ function DisplayTvPage() {
       const t = setTimeout(next, Math.max(cur.duration_seconds, 5) * 1000);
       return () => clearTimeout(t);
     }
-    // video — fallback ditangani via event handler; tetap pasang hard timeout maksimum
+    // video — rewind & play elemen yang sudah dimount; fallback via event handler
+    const v = videoRefs.current[cur.id];
+    if (v) {
+      try { v.currentTime = 0; v.play().catch(() => {}); } catch {}
+    }
     const hardMax = setTimeout(next, Math.max(cur.duration_seconds, 8) * 1000 + 5000);
     return () => clearTimeout(hardMax);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, media]);
+
+  // Pause video yang tidak aktif supaya tidak makan CPU/bandwidth saat di luar layar
+  useEffect(() => {
+    const cur = media[idx % Math.max(media.length, 1)];
+    Object.entries(videoRefs.current).forEach(([id, el]) => {
+      if (!el) return;
+      if (cur && id === cur.id) return;
+      try { el.pause(); } catch {}
+    });
   }, [idx, media]);
 
   const armStallTimer = () => {
@@ -121,45 +168,55 @@ function DisplayTvPage() {
         className="relative z-10 flex-1 gap-[clamp(8px,1vw,20px)] px-[clamp(12px,2vw,40px)] pb-[clamp(8px,1vw,20px)] min-h-0"
         style={{ display: "grid", gridTemplateColumns: "6fr 4fr" }}
       >
-        {/* LEFT — media */}
-        <section style={{ minWidth: 0, minHeight: 0 }} className="relative rounded-2xl overflow-hidden glass-card flex items-center justify-center">
-          {current ? (
-            <div key={current.id} className="absolute inset-0 flex items-center justify-center bg-black overflow-hidden tv-fade">
-              {current.media_type === "image" ? (
-                <img
-                  src={current.file_url}
-                  alt={current.title}
-                  className="relative max-w-full max-h-full w-auto h-auto object-contain"
-                  onError={next}
-                />
-              ) : (
-                <video
-                  ref={videoRef}
-                  key={current.id}
-                  src={current.file_url}
-                  className="relative max-w-full max-h-full w-auto h-auto object-contain"
-                  autoPlay
-                  playsInline
-                  preload="auto"
-                  onLoadStart={armStallTimer}
-                  onWaiting={armStallTimer}
-                  onStalled={armStallTimer}
-                  onCanPlay={clearStallTimer}
-                  onPlaying={clearStallTimer}
-                  onEnded={() => { clearStallTimer(); next(); }}
-                  onError={() => { clearStallTimer(); next(); }}
-                />
-              )}
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-[clamp(10px,1.4vw,24px)]">
-                <div className="h-px w-[clamp(40px,4vw,80px)] bg-[color:var(--tds-gold)] mb-2" />
-                <p className="font-display font-bold text-white truncate" style={{ fontSize: "clamp(16px,1.8vw,32px)" }}>{current.title}</p>
-              </div>
-            </div>
-          ) : (
+        {/* LEFT — media: SEMUA item dimount sekali, hanya opacity yang ditukar
+            agar tidak ada re-fetch tiap rotasi. */}
+        <section style={{ minWidth: 0, minHeight: 0 }} className="relative rounded-2xl overflow-hidden glass-card flex items-center justify-center bg-black">
+          {media.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-[color:var(--tds-text-soft)] text-sm">
               Belum ada media aktif.
             </div>
           )}
+          {media.map((m, i) => {
+            const isActive = current?.id === m.id;
+            const src = blobUrls[m.id] ?? m.file_url;
+            return (
+              <div
+                key={m.id}
+                className="absolute inset-0 flex items-center justify-center overflow-hidden tv-fade"
+                style={{ opacity: isActive ? 1 : 0, pointerEvents: isActive ? "auto" : "none", zIndex: isActive ? 2 : 1 }}
+                aria-hidden={!isActive}
+              >
+                {m.media_type === "image" ? (
+                  <img
+                    src={src}
+                    alt={m.title}
+                    className="relative max-w-full max-h-full w-auto h-auto object-contain"
+                    onError={() => { if (isActive) next(); }}
+                  />
+                ) : (
+                  <video
+                    ref={(el) => { videoRefs.current[m.id] = el; }}
+                    src={src}
+                    className="relative max-w-full max-h-full w-auto h-auto object-contain"
+                    muted
+                    playsInline
+                    preload="auto"
+                    onLoadStart={() => { if (isActive) armStallTimer(); }}
+                    onWaiting={() => { if (isActive) armStallTimer(); }}
+                    onStalled={() => { if (isActive) armStallTimer(); }}
+                    onCanPlay={clearStallTimer}
+                    onPlaying={clearStallTimer}
+                    onEnded={() => { if (isActive) { clearStallTimer(); next(); } }}
+                    onError={() => { if (isActive) { clearStallTimer(); next(); } }}
+                  />
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-[clamp(10px,1.4vw,24px)]">
+                  <div className="h-px w-[clamp(40px,4vw,80px)] bg-[color:var(--tds-gold)] mb-2" />
+                  <p className="font-display font-bold text-white truncate" style={{ fontSize: "clamp(16px,1.8vw,32px)" }}>{m.title}</p>
+                </div>
+              </div>
+            );
+          })}
         </section>
 
         {/* RIGHT — info */}
