@@ -202,7 +202,7 @@ function DisplayTvPage() {
                     className="relative max-w-full max-h-full w-auto h-auto object-contain"
                     muted
                     playsInline
-                    preload="auto"
+                    preload={isActive ? "auto" : "none"}
                     onLoadStart={() => { if (isActive) armStallTimer(); }}
                     onWaiting={() => { if (isActive) armStallTimer(); }}
                     onStalled={() => { if (isActive) armStallTimer(); }}
