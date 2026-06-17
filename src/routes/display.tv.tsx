@@ -19,7 +19,9 @@ type Ticker = { id: string; content: string };
 
 const TZ = "Asia/Makassar";
 const STALL_TIMEOUT_MS = 3000;
-const AUTO_RELOAD_MS = 30 * 60 * 1000;
+// Browser TV sering reload/membuang cache; auto-reload terlalu sering = download ulang
+// semua video → biaya cloud melonjak. Diperpanjang jadi 6 jam.
+const AUTO_RELOAD_MS = 6 * 60 * 60 * 1000;
 
 function DisplayTvPage() {
   const [media, setMedia] = useState<Media[]>([]);
