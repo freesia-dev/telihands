@@ -203,13 +203,13 @@ function DisplayTvPage() {
         </div>
         <div className="flex items-center gap-[clamp(8px,1vw,16px)]">
           <div className="flex items-baseline gap-2">
-            <span className="clock-glow font-bold leading-none tabular-nums" style={{ fontSize: "clamp(32px,4vw,64px)" }}>{hhmm}</span>
-            <span className="text-tds-gold font-numeric font-bold tabular-nums leading-none" style={{ fontSize: "clamp(18px,2vw,32px)" }}>{ss}</span>
+            <span suppressHydrationWarning className="clock-glow font-bold leading-none tabular-nums" style={{ fontSize: "clamp(32px,4vw,64px)" }}>{hhmm}</span>
+            <span suppressHydrationWarning className="text-tds-gold font-numeric font-bold tabular-nums leading-none" style={{ fontSize: "clamp(18px,2vw,32px)" }}>{ss}</span>
           </div>
           <div className="w-px bg-tds-gold/40" style={{ height: "clamp(32px,3.5vw,56px)" }} />
           <div className="leading-tight text-right">
-            <p className="font-display font-extrabold text-tds-gold tracking-widest" style={{ fontSize: "clamp(12px,1.1vw,20px)" }}>{weekday}</p>
-            <p className="font-display font-semibold text-white tracking-wider" style={{ fontSize: "clamp(11px,0.95vw,16px)" }}>{dateStr}</p>
+            <p suppressHydrationWarning className="font-display font-extrabold text-tds-gold tracking-widest" style={{ fontSize: "clamp(12px,1.1vw,20px)" }}>{weekday}</p>
+            <p suppressHydrationWarning className="font-display font-semibold text-white tracking-wider" style={{ fontSize: "clamp(11px,0.95vw,16px)" }}>{dateStr}</p>
           </div>
         </div>
       </header>
