@@ -39,6 +39,7 @@ function DisplayTvPage() {
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentSignatureRef = useRef("");
   const blobUrlsRef = useRef<Record<string, string>>({});
+  const blobSourcesRef = useRef<Record<string, string>>({});
   // Cache Storage bertahan setelah APK ditutup atau TV direstart. Blob URL hanya
   // menjadi jembatan cepat dari cache persisten ke elemen media selama sesi aktif.
   const [blobUrls, setBlobUrls] = useState<Record<string, string>>({});
@@ -96,7 +97,9 @@ function DisplayTvPage() {
       }
 
       for (const item of media) {
-        if (cancelled || blobUrlsRef.current[item.id]) continue;
+        if (cancelled) return;
+        if (blobUrlsRef.current[item.id] && blobSourcesRef.current[item.id] === item.file_url) continue;
+        if (blobUrlsRef.current[item.id]) URL.revokeObjectURL(blobUrlsRef.current[item.id]);
         try {
           let response = persistentCache ? await persistentCache.match(item.file_url) : undefined;
           if (!response) {
@@ -108,6 +111,7 @@ function DisplayTvPage() {
           const url = URL.createObjectURL(await response.blob());
           if (cancelled) { URL.revokeObjectURL(url); return; }
           blobUrlsRef.current[item.id] = url;
+          blobSourcesRef.current[item.id] = item.file_url;
           setBlobUrls((previous) => ({ ...previous, [item.id]: url }));
         } catch (error) {
           console.warn("[tv] media cache gagal", item.title, error);
@@ -119,6 +123,7 @@ function DisplayTvPage() {
       if (!activeIds.has(id)) {
         URL.revokeObjectURL(url);
         delete blobUrlsRef.current[id];
+        delete blobSourcesRef.current[id];
       }
     }
     setBlobUrls({ ...blobUrlsRef.current });
