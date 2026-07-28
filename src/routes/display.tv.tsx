@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtPct } from "@/lib/format";
 import logo from "@/assets/tds-logo.png";
@@ -7,6 +7,11 @@ import logo from "@/assets/tds-logo.png";
 export const Route = createFileRoute("/display/tv")({
   head: () => ({ meta: [
     { title: "Display TV — Telihan Digital Signage" },
+    { name: "description", content: "Layar informasi digital Bank KCP Telihan untuk Android TV." },
+    { property: "og:title", content: "Display TV — Telihan Digital Signage" },
+    { property: "og:description", content: "Layar informasi digital Bank KCP Telihan untuk Android TV." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
     { name: "viewport", content: "width=device-width, initial-scale=1, user-scalable=no" },
   ] }),
   component: DisplayTvPage,
@@ -19,9 +24,9 @@ type Ticker = { id: string; content: string };
 
 const TZ = "Asia/Makassar";
 const STALL_TIMEOUT_MS = 3000;
-// Browser TV sering reload/membuang cache; auto-reload terlalu sering = download ulang
-// semua video → biaya cloud melonjak. Diperpanjang jadi 6 jam.
-const AUTO_RELOAD_MS = 6 * 60 * 60 * 1000;
+const MEDIA_CACHE = "tds-tv-media-v1";
+const DATA_CACHE_KEY = "tds-tv-content-v1";
+type DisplayData = { media: Media[]; savings: Saving[]; depo: Depo[]; ticker: Ticker[] };
 
 function DisplayTvPage() {
   const [media, setMedia] = useState<Media[]>([]);
@@ -32,11 +37,23 @@ function DisplayTvPage() {
   const [now, setNow] = useState(new Date());
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // URL hasil prefetch (blob) per media.id — di-cache di memori, jadi file
-  // hanya di-download SEKALI per sesi, sisanya dipakai ulang dari RAM.
+  const contentSignatureRef = useRef("");
+  const blobUrlsRef = useRef<Record<string, string>>({});
+  // Cache Storage bertahan setelah APK ditutup atau TV direstart. Blob URL hanya
+  // menjadi jembatan cepat dari cache persisten ke elemen media selama sesi aktif.
   const [blobUrls, setBlobUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    let cancelled = false;
+    const applyData = (data: DisplayData) => {
+      const signature = JSON.stringify(data);
+      if (signature === contentSignatureRef.current || cancelled) return;
+      contentSignatureRef.current = signature;
+      setMedia(data.media);
+      setSavings(data.savings);
+      setDepo(data.depo);
+      setTicker(data.ticker);
+    };
     const load = async () => {
       const [m, s, d, t] = await Promise.all([
         supabase.from("media").select("*").eq("is_active", true).order("sort_order"),
@@ -44,49 +61,76 @@ function DisplayTvPage() {
         supabase.from("deposito_rates").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("running_text").select("*").eq("is_active", true).order("sort_order"),
       ]);
-      setMedia((m.data ?? []) as Media[]);
-      setSavings((s.data ?? []) as Saving[]);
-      setDepo((d.data ?? []) as Depo[]);
-      setTicker((t.data ?? []) as Ticker[]);
+      if (m.error || s.error || d.error || t.error) return;
+      const data: DisplayData = {
+        media: (m.data ?? []) as Media[],
+        savings: (s.data ?? []) as Saving[],
+        depo: (d.data ?? []) as Depo[],
+        ticker: (t.data ?? []) as Ticker[],
+      };
+      applyData(data);
+      try { localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(data)); } catch {}
     };
-    load();
+    try {
+      const saved = localStorage.getItem(DATA_CACHE_KEY);
+      if (saved) applyData(JSON.parse(saved) as DisplayData);
+    } catch {}
+    void load();
     const refresh = setInterval(load, 60_000);
     const clock = setInterval(() => setNow(new Date()), 1000);
-    const reload = setTimeout(() => location.reload(), AUTO_RELOAD_MS);
-    return () => { clearInterval(refresh); clearInterval(clock); clearTimeout(reload); };
+    return () => { cancelled = true; clearInterval(refresh); clearInterval(clock); };
   }, []);
 
-  // Prefetch tiap file media ke blob URL — sekali per id selama sesi hidup.
-  // Kalau daftar media berubah (item dihapus admin), revoke blob lama supaya RAM
-  // tidak menumpuk.
+  // Unduh berurutan (bukan serentak) agar TV tidak macet saat startup. Jika URL
+  // sudah ada di Cache Storage, tidak ada request file ke jaringan.
   useEffect(() => {
     let cancelled = false;
-    const activeIds = new Set(media.map((m) => m.id));
-    media.forEach((m) => {
-      if (blobUrls[m.id]) return;
-      fetch(m.file_url, { cache: "force-cache" })
-        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
-        .then((b) => {
-          if (cancelled) return;
-          const url = URL.createObjectURL(b);
-          setBlobUrls((prev) => (prev[m.id] ? prev : { ...prev, [m.id]: url }));
-        })
-        .catch((e) => console.warn("[tv] prefetch gagal", m.title, e));
-    });
-    // bersihkan blob untuk media yang sudah dihapus
-    setBlobUrls((prev) => {
-      let changed = false;
-      const next: Record<string, string> = {};
-      for (const [id, url] of Object.entries(prev)) {
-        if (activeIds.has(id)) next[id] = url;
-        else { URL.revokeObjectURL(url); changed = true; }
+    const activeIds = new Set(media.map((item) => item.id));
+    const activeUrls = new Set(media.map((item) => item.file_url));
+
+    const prepareMedia = async () => {
+      const persistentCache = "caches" in window ? await caches.open(MEDIA_CACHE) : null;
+      if (persistentCache) {
+        const cachedRequests = await persistentCache.keys();
+        await Promise.all(cachedRequests.map((request) => activeUrls.has(request.url) ? Promise.resolve(false) : persistentCache.delete(request)));
       }
-      return changed ? next : prev;
-    });
+
+      for (const item of media) {
+        if (cancelled || blobUrlsRef.current[item.id]) continue;
+        try {
+          let response = persistentCache ? await persistentCache.match(item.file_url) : undefined;
+          if (!response) {
+            const networkResponse = await fetch(item.file_url, { cache: "no-cache" });
+            if (!networkResponse.ok) throw new Error(`HTTP ${networkResponse.status}`);
+            if (persistentCache) await persistentCache.put(item.file_url, networkResponse.clone());
+            response = networkResponse;
+          }
+          const url = URL.createObjectURL(await response.blob());
+          if (cancelled) { URL.revokeObjectURL(url); return; }
+          blobUrlsRef.current[item.id] = url;
+          setBlobUrls((previous) => ({ ...previous, [item.id]: url }));
+        } catch (error) {
+          console.warn("[tv] media cache gagal", item.title, error);
+        }
+      }
+    };
+
+    for (const [id, url] of Object.entries(blobUrlsRef.current)) {
+      if (!activeIds.has(id)) {
+        URL.revokeObjectURL(url);
+        delete blobUrlsRef.current[id];
+      }
+    }
+    setBlobUrls({ ...blobUrlsRef.current });
+    void prepareMedia();
     return () => { cancelled = true; };
   }, [media]);
 
-  const next = () => setIdx((i) => (media.length ? (i + 1) % media.length : 0));
+  useEffect(() => () => {
+    Object.values(blobUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  const next = useCallback(() => setIdx((i) => (media.length ? (i + 1) % media.length : 0)), [media.length]);
 
   useEffect(() => {
     if (media.length === 0) return;
@@ -103,7 +147,7 @@ function DisplayTvPage() {
     const hardMax = setTimeout(next, Math.max(cur.duration_seconds, 8) * 1000 + 5000);
     return () => clearTimeout(hardMax);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, media]);
+  }, [idx, media, next]);
 
   // Pause video yang tidak aktif supaya tidak makan CPU/bandwidth saat di luar layar
   useEffect(() => {
@@ -180,7 +224,7 @@ function DisplayTvPage() {
           )}
           {media.map((m, i) => {
             const isActive = current?.id === m.id;
-            const src = blobUrls[m.id] ?? m.file_url;
+            const src = blobUrls[m.id];
             return (
               <div
                 key={m.id}
@@ -188,7 +232,9 @@ function DisplayTvPage() {
                 style={{ opacity: isActive ? 1 : 0, pointerEvents: isActive ? "auto" : "none", zIndex: isActive ? 2 : 1 }}
                 aria-hidden={!isActive}
               >
-                {m.media_type === "image" ? (
+                {!src ? (
+                  isActive ? <div className="text-[color:var(--tds-text-soft)] text-sm">Menyiapkan media…</div> : null
+                ) : m.media_type === "image" ? (
                   <img
                     src={src}
                     alt={m.title}
